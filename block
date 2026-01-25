@@ -1,0 +1,10 @@
+[Test]
+! Version: 1
+! Title: test
+! Description: test
+! Syntax: Adblock Plus Filter List
+! Entries: 1
+! Last modified: 2026-01-25T11:05:27+0000
+! Expires: 1 hours
+
+||reddit.com^
