@@ -1,11 +1,13 @@
 [Test]
-! Version: 2
-! Title: test
-! Description: test
+! Version: 3
+! Title: Block List
+! Description: Block List
 ! Syntax: Adblock Plus Filter List
-! Entries: 1
-! Last modified: 2026-01-25T13:05:27+0000
+! Entries: 4
+! Last modified: 2026-01-26T20:05:27+0000
 ! Expires: 1 hours
 
 ||reddit.com^
 ||reddit.com^$document
+||news.ycombinator.com^
+||news.ycombinator.com^$document
