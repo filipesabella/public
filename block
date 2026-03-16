@@ -3,13 +3,17 @@
 ! Title: Block List
 ! Description: Block List
 ! Syntax: Adblock Plus Filter List
-! Entries: 6
-! Last modified: 2026-02-14T20:00:00+0000
+! Entries: 10
+! Last modified: 2026-03-16T10:00:00+0000
 ! Expires: 1 hours
 
 ||reddit.com^
 ||reddit.com^$document
+||old.reddit.com^
+||old.reddit.com^$document
 ||news.ycombinator.com^
 ||news.ycombinator.com^$document
 ||lobste.rs^
 ||lobste.rs^$document
+||bbc.com^
+||bbc.com^$document
