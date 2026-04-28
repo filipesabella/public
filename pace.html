@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Pace Calculator | Click time to find pace</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(145deg, #f5f7fc 0%, #eef2f8 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      padding: 2rem 1.5rem;
+    }
+
+    .calculator-card {
+      max-width: 880px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(2px);
+      border-radius: 2rem;
+      box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .input-section {
+      padding: 1.8rem 2rem 0 2rem;
+      background: white;
+    }
+
+    .input-wrapper {
+      flex: 2;
+      min-width: 180px;
+      display: flex;
+      align-items: center;
+      background: #f8fafd;
+      border: 1px solid #cfdde6;
+      border-radius: 1rem;
+      padding: 0.2rem 1rem;
+      transition: all 0.2s;
+    }
+
+    .input-wrapper:focus-within {
+      border-color: #2c7da0;
+      box-shadow: 0 0 0 3px rgba(44, 125, 160, 0.2);
+      background: white;
+    }
+
+    .input-wrapper input {
+      width: 100%;
+      padding: 0.9rem 0.5rem 0.9rem 0;
+      font-size: 1.2rem;
+      font-weight: 500;
+      border: none;
+      background: transparent;
+      outline: none;
+      color: #0a1c2a;
+    }
+
+    .input-wrapper span {
+      font-weight: 500;
+      color: #4a627a;
+      padding-left: 0.5rem;
+      white-space: nowrap;
+    }
+
+    .results-container {
+      padding: 1.8rem 2rem 2rem 2rem;
+    }
+
+    .distance-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+
+    .distance-card {
+      background: #ffffff;
+      border-radius: 1rem;
+      padding: 1rem 1.2rem;
+      transition: transform 0.1s ease, box-shadow 0.2s;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.03);
+      border: 1px solid #eef2f8;
+      cursor: pointer;
+    }
+
+    .distance-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 20px -12px rgba(0, 0, 0, 0.12);
+      border-color: #cbdde9;
+      background: #fefefd;
+    }
+
+    .distance {
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: #1f3b4c;
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px dashed #dce5ec;
+      padding-bottom: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .distance .distance-name {
+      background: #eef2fc;
+      padding: 0.1rem 0.7rem;
+      border-radius: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .time-value {
+      font-size: 1.65rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace, 'SF Mono';
+      color: #0f2b39;
+      letter-spacing: -0.5px;
+      word-break: break-word;
+    }
+
+    .inline-time-editor {
+      display: inline-block;
+      width: 100%;
+    }
+
+    .inline-time-editor input {
+      font-size: 1.65rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace, 'SF Mono';
+      width: 100%;
+      background: #f0f4fa;
+      outline: none;
+      padding: 0.2rem 0.4rem;
+      color: #0f2b39;
+      border-radius: 0.75rem;
+      border: 1px solid #2c7da0;
+      letter-spacing: -0.5px;
+    }
+
+    @media (max-width: 550px) {
+      .distance-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .input-section,
+      .results-container {
+        padding-left: 1.2rem;
+        padding-right: 1.2rem;
+      }
+
+      .time-value {
+        font-size: 1.4rem;
+      }
+
+      .inline-time-editor input {
+        font-size: 1.3rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="calculator-card">
+    <div class="input-section">
+      <div class="pace-input-group">
+        <div class="input-wrapper">
+          <input type="text"
+                 id="paceInput"
+                 placeholder="e.g., 5:30 or 4:15"
+                 value="5:20">
+          <span>min / km</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="results-container">
+      <div class="distance-grid" id="timeGrid">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const DISTANCES = [
+        { km: 1.0 },
+        { km: 1.6 },
+        { km: 5.0 },
+        { km: 10.0 },
+        { name: "Half marathon", km: 21.0975 },
+        { name: "Marathon", km: 42.195 },
+        { km: 50.0 },
+        { km: 100.0 },
+        { km: 160.0 },
+      ];
+
+      const paceInput = document.getElementById('paceInput');
+      const gridContainer = document.getElementById('timeGrid');
+
+      let activeEditCard = null;
+      let activeInputElement = null;
+
+      function parseTimeToSeconds(timeStr) {
+        const clean = timeStr?.trim()?.toLowerCase();
+        if (clean === '') return null;
+
+        const parts = clean.split(/[:\s]/);
+        let hours, minutes, seconds;
+        if (parts.length === 1) {
+          hours = parseInt(parts[0], 10);
+          minutes = 0;
+          seconds = 0;
+        } else if (parts.length === 2) {
+          hours = parseInt(parts[0], 10);
+          minutes = parseInt(parts[1], 10);
+          seconds = 0;
+        } else if (parts.length === 3) {
+          hours = parseInt(parts[0], 10);
+          minutes = parseInt(parts[1], 10);
+          seconds = parseInt(parts[2], 10);
+        }
+        return hours * 3600 + minutes * 60 + seconds;
+      }
+
+      function formatTimeFromSeconds(totalSeconds) {
+        if (totalSeconds === null || isNaN(totalSeconds) || totalSeconds <= 0) return '--:--';
+        const roundedSec = Math.round(totalSeconds);
+        if (roundedSec < 0) return '--:--';
+        const hours = Math.floor(roundedSec / 3600);
+        const minutes = Math.floor((roundedSec % 3600) / 60);
+        const seconds = roundedSec % 60;
+
+        if (hours > 0) {
+          return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}h`;
+        } else {
+          return `${minutes}:${seconds.toString().padStart(2, '0')}m`;
+        }
+      }
+
+      function parsePaceToSeconds(paceStr) {
+        if (!paceStr || typeof paceStr !== 'string') return null;
+        const trimmed = paceStr.trim().replace(/\s/g, '');
+        const [minutesStr, secondsStr] = trimmed.split(':');
+        if (!minutesStr || !secondsStr) return null;
+        const minutes = parseInt(minutesStr, 10);
+        const seconds = parseFloat(secondsStr);
+        if (isNaN(minutes) || isNaN(seconds)) return null;
+        if (seconds >= 60 || minutes < 0) return null;
+        const totalSecondsPerKm = minutes * 60 + seconds;
+        return totalSecondsPerKm <= 0 ? null : totalSecondsPerKm;
+      }
+
+      function computeTotalSeconds(paceSecPerKm, distanceKm) {
+        if (!paceSecPerKm || paceSecPerKm <= 0) return 0;
+        return paceSecPerKm * distanceKm;
+      }
+
+      function computePaceFromTotalTime(totalSeconds, distanceKm) {
+        if (!totalSeconds || totalSeconds <= 0 || !distanceKm || distanceKm <= 0) return null;
+        const paceSecPerKm = totalSeconds / distanceKm;
+        return paceSecPerKm <= 0 ? null : paceSecPerKm;
+      }
+
+      function formatPaceFromSeconds(paceSec) {
+        if (!paceSec || paceSec <= 0) return null;
+        const minutes = Math.floor(paceSec / 60);
+        const seconds = Math.round(paceSec % 60);
+        if (seconds >= 60) {
+          return `${minutes + 1}:00`;
+        }
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      }
+
+      function getCurrentPaceSeconds() {
+        return parsePaceToSeconds(paceInput.value);
+      }
+
+      function renderTimes(paceSecPerKm) {
+        if (!gridContainer) return;
+        const isValidPace = (paceSecPerKm !== null && paceSecPerKm > 0);
+
+        if (activeEditCard) {
+          cleanupActiveEditor(false);
+        }
+
+        gridContainer.innerHTML = '';
+
+        for (let dist of DISTANCES) {
+          const card = document.createElement('div');
+          card.className = 'distance-card';
+          card.setAttribute('data-distance-km', dist.km);
+
+          const distanceNameDiv = document.createElement('div');
+          distanceNameDiv.className = 'distance';
+          distanceNameDiv.innerHTML = `<span>${dist.km.toFixed(1)}k</span>${dist.name ? '<span class="distance-name">' + dist.name + '</span>' : ''}`;
+
+          const timeValueDiv = document.createElement('div');
+          timeValueDiv.className = 'time-value';
+
+          const totalSec = isValidPace ? computeTotalSeconds(paceSecPerKm, dist.km) : 0;
+          const formatted = formatTimeFromSeconds(totalSec);
+
+          const timeSpan = document.createElement('span');
+          timeSpan.className = 'event-time-display';
+          timeSpan.textContent = formatted;
+
+          timeValueDiv.appendChild(timeSpan);
+          card.appendChild(distanceNameDiv);
+          card.appendChild(timeValueDiv);
+
+          card._timeSpanElement = timeSpan;
+          card._distanceKm = dist.km;
+
+          card.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (activeEditCard === card) return;
+            if (activeEditCard) cleanupActiveEditor(true);
+            startInlineEdit(card);
+          });
+
+          gridContainer.appendChild(card);
+        }
+      }
+
+      function startInlineEdit(card) {
+        const timeSpan = card._timeSpanElement;
+        if (!timeSpan) return;
+
+        const currentText = timeSpan.textContent;
+        const prefillValue = currentText.replace(/[hm]$/, '');
+
+        const timeValueDiv = card.querySelector('.time-value');
+        if (!timeValueDiv) return;
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'inline-time-editor';
+        input.value = prefillValue;
+        input.placeholder = 'mm:ss or h:mm:ss';
+
+        const originalDisplay = timeSpan.style.display;
+        timeSpan.style.display = 'none';
+        timeValueDiv.appendChild(input);
+
+        activeEditCard = card;
+        activeInputElement = input;
+
+        input.focus();
+        input.select();
+
+        const commitChanges = () => {
+          if (!activeEditCard) return;
+          const rawValue = input.value.trim();
+          const newTotalSeconds = parseTimeToSeconds(rawValue);
+          const distanceKm = card._distanceKm;
+
+          if (newTotalSeconds !== null && newTotalSeconds > 0 && distanceKm > 0) {
+            const requiredPaceSec = newTotalSeconds / distanceKm;
+            if (requiredPaceSec > 0 && isFinite(requiredPaceSec)) {
+              const newPaceFormatted = formatPaceFromSeconds(requiredPaceSec);
+              if (newPaceFormatted) {
+                paceInput.value = newPaceFormatted;
+                const newPaceSec = parsePaceToSeconds(newPaceFormatted);
+                if (newPaceSec && newPaceSec > 0) {
+                  renderTimes(newPaceSec);
+                } else {
+                  renderTimes(getCurrentPaceSeconds());
+                }
+              } else {
+                renderTimes(getCurrentPaceSeconds());
+              }
+            } else {
+              renderTimes(getCurrentPaceSeconds());
+            }
+          } else {
+            renderTimes(getCurrentPaceSeconds());
+          }
+
+          cleanupActiveEditor(true);
+        };
+
+        const cancelEdit = () => {
+          if (activeEditCard) {
+            cleanupActiveEditor(true);
+            const currentPace = getCurrentPaceSeconds();
+            renderTimes(currentPace);
+          }
+        };
+
+        input.addEventListener('blur', () => {
+          commitChanges();
+        });
+
+        input.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            commitChanges();
+          }
+        });
+
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            cancelEdit();
+          }
+        });
+      }
+
+      function cleanupActiveEditor(restoreDisplay = true) {
+        if (activeEditCard && activeInputElement) {
+          const timeValueDiv = activeEditCard.querySelector('.time-value');
+          if (timeValueDiv && activeInputElement.parentNode === timeValueDiv) {
+            activeInputElement.remove();
+          }
+          if (restoreDisplay && activeEditCard._timeSpanElement) {
+            activeEditCard._timeSpanElement.style.display = '';
+          }
+        }
+        activeEditCard = null;
+        activeInputElement = null;
+      }
+
+      function updateFromPaceString(paceString) {
+        const paceSec = parsePaceToSeconds(paceString);
+        if (paceSec === null || paceSec <= 0) {
+          renderTimes(null);
+          return;
+        }
+        renderTimes(paceSec);
+      }
+
+      function onPaceInputChange() {
+        updateFromPaceString(paceInput.value);
+      }
+
+      function onPaceBlur() {
+        const val = paceInput.value.trim();
+        if (val === "") {
+          paceInput.value = "5:20";
+          updateFromPaceString("5:20");
+          return;
+        }
+
+        if (!val.includes(':')) {
+          if (/^\d{3,4}$/.test(val)) {
+            const minutesPart = parseInt(val.slice(0, -2), 10);
+            const secondsPart = parseInt(val.slice(-2), 10);
+            if (!isNaN(minutesPart) && !isNaN(secondsPart) && secondsPart >= 0 && secondsPart < 60 && minutesPart >= 0) {
+              const corrected = `${minutesPart}:${secondsPart.toString().padStart(2, '0')}`;
+              paceInput.value = corrected;
+              updateFromPaceString(corrected);
+              return;
+            }
+          }
+        }
+        updateFromPaceString(val);
+      }
+
+      paceInput.addEventListener('input', onPaceInputChange);
+      paceInput.addEventListener('change', onPaceInputChange);
+      paceInput.addEventListener('blur', onPaceBlur);
+
+      document.addEventListener('click', function (e) {
+        if (activeEditCard && activeInputElement) {
+          let isInsideCard = false;
+          let node = e.target;
+          while (node) {
+            if (node === activeEditCard) {
+              isInsideCard = true;
+              break;
+            }
+            node = node.parentNode;
+          }
+          if (!isInsideCard) {
+            const inputStillExists = activeInputElement && activeInputElement.parentNode;
+            if (inputStillExists) {
+              activeInputElement.blur();
+            } else {
+              cleanupActiveEditor(true);
+              const curPace = getCurrentPaceSeconds();
+              renderTimes(curPace);
+            }
+          }
+        }
+      });
+
+      const defaultPace = "5:20";
+      paceInput.value = defaultPace;
+      updateFromPaceString(defaultPace);
+    })();
+  </script>
+</body>
+
+</html>
