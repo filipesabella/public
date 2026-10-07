@@ -38,6 +38,11 @@
       background: white;
     }
 
+    .pace-input-group {
+      display: flex;
+      gap: 0.75rem;
+    }
+
     .input-wrapper {
       flex: 2;
       min-width: 180px;
@@ -72,6 +77,11 @@
       color: #4a627a;
       padding-left: 0.5rem;
       white-space: nowrap;
+    }
+
+    .input-wrapper.speed-wrapper {
+      flex: 1;
+      min-width: 0;
     }
 
     .results-container {
@@ -180,6 +190,13 @@
                  value="5:20">
           <span>min / km</span>
         </div>
+        <div class="input-wrapper speed-wrapper">
+          <input type="text"
+                 id="speedInput"
+                 inputmode="decimal"
+                 placeholder="e.g., 12">
+          <span>km/h</span>
+        </div>
       </div>
     </div>
 
@@ -204,6 +221,7 @@
       ];
 
       const paceInput = document.getElementById('paceInput');
+      const speedInput = document.getElementById('speedInput');
       const gridContainer = document.getElementById('timeGrid');
 
       let activeEditCard = null;
@@ -284,9 +302,23 @@
         return parsePaceToSeconds(paceInput.value);
       }
 
+      function formatSpeed(paceSecPerKm) {
+        if (!paceSecPerKm || paceSecPerKm <= 0) return '';
+        return (3600 / paceSecPerKm).toFixed(1);
+      }
+
+      function parseSpeed(speedStr) {
+        const speed = parseFloat((speedStr || '').trim().replace(',', '.'));
+        return isNaN(speed) || speed <= 0 ? null : speed;
+      }
+
       function renderTimes(paceSecPerKm) {
         if (!gridContainer) return;
         const isValidPace = (paceSecPerKm !== null && paceSecPerKm > 0);
+
+        if (document.activeElement !== speedInput) {
+          speedInput.value = formatSpeed(paceSecPerKm);
+        }
 
         if (activeEditCard) {
           cleanupActiveEditor(false);
@@ -464,6 +496,21 @@
         }
         updateFromPaceString(val);
       }
+
+      function onSpeedInputChange() {
+        const speed = parseSpeed(speedInput.value);
+        if (speed === null) return;
+        const paceSec = 3600 / speed;
+        paceInput.value = formatPaceFromSeconds(paceSec);
+        renderTimes(paceSec);
+      }
+
+      function onSpeedBlur() {
+        speedInput.value = formatSpeed(getCurrentPaceSeconds());
+      }
+
+      speedInput.addEventListener('input', onSpeedInputChange);
+      speedInput.addEventListener('blur', onSpeedBlur);
 
       paceInput.addEventListener('input', onPaceInputChange);
       paceInput.addEventListener('change', onPaceInputChange);
